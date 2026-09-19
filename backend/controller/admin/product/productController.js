@@ -1,4 +1,4 @@
-const Product = require ('../../../models/productModel')
+const Product = require('../../../models/admin/product/productModel')
 
 
 
@@ -16,7 +16,7 @@ const createProduct = async (req, res) => {
         productStockQty,
         productStatus,
         productPrice,
-        productImage: "https://res.cloudinary.com/dxjv8qg0f/image/upload/v1690911873/ddd/pexels-pixabay-163064_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1.jpg"
+        productImageUrl: "https://res.cloudinary.com/dxjv8qg0f/image/upload/v1690911873/ddd/pexels-pixabay-163064_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1.jpg"
 
     })
     return res.status(201).json({ message: "Product created successfully" });
@@ -24,11 +24,11 @@ const createProduct = async (req, res) => {
 
 
 
-//get all product
-const getAllProduct = async (req, res) => {
+//get all products
+const getAllProducts = async (req, res) => {
     const product = await Product.find();
     return res.status(200).json({
-        message: "Product fetched succesfully",
+        message: 'Product fetched successfully',
         data: product
     });
 }
@@ -53,31 +53,37 @@ const getSingleProduct = async (req, res) => {
 
 
 
-//  update product
-const updateProduct = async (req, res)=> {
+// update product
+const updateSingleProduct = async (req, res) => {
     const id = req.params.id;
     const { productName, productDescription, productStockQty, productStatus, productPrice } = req.body;
+
+    if (!productName || !productDescription || !productStockQty || !productStatus || !productPrice) {
         return res.status(400).json({
-            message: "All fields are required"
+            message: 'All fields are required'
         });
     }
-    const product = await Product.findByIdAndUpdate(id);
-    if(!product) {
+
+    const product = await Product.findById(id);
+    if (!product) {
         return res.status(404).json({
-            message: "Product not found"
-        })
+            message: 'Product not found'
+        });
     }
+
     await Product.findByIdAndUpdate(id, {
         productName,
         productDescription,
         productStockQty,
         productStatus,
         productPrice,
-        productImage: "https://res.cloudinary.com/dxjv8qg0f/image/upload/v1690911873/ddd/pexels-pixabay-163064_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1.jpg"
-    })
+        productImageUrl: 'https://res.cloudinary.com/dxjv8qg0f/image/upload/v1690911873/ddd/pexels-pixabay-163064_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1_1.jpg'
+    });
+
     return res.status(200).json({
-        message: "Product updated successfully"
-    })
+        message: 'Product updated successfully'
+    });
+}
 
 // delete product
 const deleteSingleProduct = async (req, res)=> {
@@ -99,10 +105,10 @@ const deleteSingleProduct = async (req, res)=> {
 
 
 module.exports = {
-    createProduct ,
+    createProduct,
     getAllProducts,
     getSingleProduct,
-    updateProduct,
+    updateSingleProduct,
     deleteSingleProduct
 }
 

@@ -1,12 +1,17 @@
-const { deleteSingleProduct } = require('../../../controller/admin/product/productController');
-const { createProduct} = require ('../controller/admin/productController');
-
-const router = require ('express').Router();
-
-router.route('/create-product').post(createProduct);
-router.route('/products').get(getAllProducts);
-router.route('/products/:id').get(getSinglePRoduct).patch(updateSingleProduct).delete(deleteSingleProduct)
+const { createProduct, getAllProducts, getSingleProduct, updateSingleProduct, deleteSingleProduct } = require('../../../controller/admin/product/productController');
+const checkRole = require('../../../middleware/checkRole');
+const isAuthenticated = require('../../../middleware/isAuthenticated');
 
 
 
-module.exports = router;
+
+const router = require('express').Router();
+
+
+// Restful API routes for product management
+router.route("/create").post(isAuthenticated,checkRole("seller"),createProduct)
+router.route("/products").get(getAllProducts)
+router.route("/products/:id").get(getSingleProduct).patch(updateSingleProduct).delete(deleteSingleProduct)
+
+
+module.exports = router
