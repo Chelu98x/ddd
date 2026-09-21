@@ -9,15 +9,20 @@ const createOrder = async (req, res) => {
         return res.status(400).json({ message: "Order items are required" });
     }
 
-    const existingProducts = await Product.find({ _id: { $in: orderItems.map(item => item.productId) } });
+    const validOrderItems = orderItems.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity || 1
+    }));
 
-    if (existingProducts.length !== orderItems.length) {
+    const existingProducts = await Product.find({ _id: { $in: validOrderItems.map(item => item.productId) } });
+
+    if (existingProducts.length !== validOrderItems.length) {
         return res.status(400).json({ message: "One or more products in the order do not exist" });
     }
 
     const order = await Order.create({
         userId,
-        orderItems,
+        orderItems: validOrderItems,
         totalAmount,
         shippingAddress,
         paymentDetails
@@ -30,8 +35,8 @@ const createOrder = async (req, res) => {
 const getMyOrders = async (req, res) => {
     const userId = req.user._id;
     const myOrders = await Order.find({ userId }).populate({
-        path: "orderItems.productID",
-        model:"Product"
+        path: "orderItems.productId",
+        model: "Product"
     });
     if(!myOrders || myOrders.length === 0){
         return res.status(404).json({ message: "No orders found for this user" });

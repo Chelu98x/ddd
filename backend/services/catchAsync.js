@@ -1,7 +1,8 @@
 module.exports = (fn) => {
-  return (res, req, next) => {
-    fn(res, req, next).catch(next)((error) => {
-      return res.status(500).json({message: error.message})
-    })
-  }
-}
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch((error) => {
+      console.error(error);
+      return res.status(500).json({ message: error.message || "Something went wrong" });
+    });
+  };
+};

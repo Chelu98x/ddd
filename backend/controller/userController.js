@@ -3,71 +3,99 @@ const User = require('../models/userModel')
 const sendEmail = require('../services/sendEmail')
 const jwt = require ('jsonwebtoken')
 
+const normalizeEmail = (value = "") => String(value).trim().toLowerCase();
+
 const registerUser = async (req, res) => {
-    const { userEmail, userPhoneNumber, userName, userPassword } = req.body;
+    const payload = req.body || {};
+    const userEmail = normalizeEmail(payload.userEmail || payload.email);
+    const userPhoneNumber = String(payload.userPhoneNumber || payload.phoneNumber || payload.phone || "").trim();
+    const userName = String(payload.userName || payload.name || payload.fullName || "").trim();
+    const userPassword = payload.userPassword || payload.password;
+
     if (!userEmail || !userPhoneNumber || !userName || !userPassword) {
-        return res.status(400).json({
-            message: "All fields are required"
-        })
+        return res.status(400).json({ message: "All fields are required" });
     }
 
-    const existingUser = await User.findOne({
-        userEmail
-    })
-
-    if (existingUser) {
-        return res.status(400).json({
-            message: "User already exists! Try login instead"
-        })
+    const emailExists = await User.findOne({ userEmail });
+    if (emailExists) {
+        return res.status(400).json({ message: "This email is already registered. Please login instead." });
     }
 
-    await User.create({
-        userEmail,
-        userPhoneNumber,
-        userName,
-        userPassword: await bcrypt.hash(userPassword, 10)
-    })
+    const phoneExists = await User.findOne({ userPhoneNumber });
+    if (phoneExists) {
+        return res.status(400).json({ message: "This phone number is already registered. Please use another number." });
+    }
 
-    sendEmail({
-        userEmail,
-        subject: "Welcome to our E-commerce Platform",
-        text: `Hi ${userName},\n\nThank you for registering on our e-commerce platform. We're excited to have you on board! If you have any questions or need assistance, feel free to reach out to our support team.\n\nBest regards,\nE-commerce Team`
-    })
+    try {
+        const newUser = await User.create({
+            userEmail,
+            userPhoneNumber,
+            userName,
+            userPassword: await bcrypt.hash(userPassword, 10)
+        });
 
-    return res.status(201).json({
-        message: "User registered successfully"
-    })
-}
+        sendEmail({
+            userEmail,
+            subject: "Welcome to our E-commerce Platform",
+            text: `Hi ${userName},\n\nThank you for registering on our e-commerce platform. We're excited to have you on board! If you have any questions or need assistance, feel free to reach out to our support team.\n\nBest regards,\nE-commerce Team`
+        });
+
+        return res.status(201).json({
+            message: "User registered successfully",
+            user: {
+                _id: newUser._id,
+                userName: newUser.userName,
+                userEmail: newUser.userEmail,
+                userPhoneNumber: newUser.userPhoneNumber,
+                userRole: newUser.userRole
+            }
+        });
+    } catch (error) {
+        if (error?.code === 11000) {
+            return res.status(400).json({
+                message: "This email or phone number is already in use. Please choose different credentials."
+            });
+        }
+        return res.status(500).json({ message: error.message || "Registration failed" });
+    }
+};
 
 //login
 const loginUser = async (req, res) => {
-    const { userEmail, userPassword } = req.body;
+    const payload = req.body || {};
+    const userEmail = normalizeEmail(payload.userEmail || payload.email);
+    const userPassword = payload.userPassword || payload.password;
 
-    const existingUser = await User.findOne({
-        userEmail
-    })
+    if (!userEmail || !userPassword) {
+        return res.status(400).json({ message: "Email and password are required" });
+    }
 
+    const existingUser = await User.findOne({ userEmail });
     if (!existingUser) {
-        return res.status(404).json({
-            message: "User not found"
-        })
+        return res.status(404).json({ message: "User not found" });
     }
-    const isPasswordValid = await bcrypt.compare(userPassword, existingUser.userPassword)
+
+    const isPasswordValid = await bcrypt.compare(userPassword, existingUser.userPassword);
     if (!isPasswordValid) {
-        return res.status(400).json({
-            message: "Invalid password"
-        })
+        return res.status(400).json({ message: "Invalid password" });
     }
-    const token = jwt.sign ({
-        userId:existingUser._id
-    }, process.env.JWT_SECRET, {
+
+    const token = jwt.sign({ userId: existingUser._id }, process.env.JWT_SECRET, {
         expiresIn: "30d"
-    })
-return res.status(200).json({
-    message: "User logged in successfully",
-    token: token
-})
-}
+    });
+
+    return res.status(200).json({
+        message: "User logged in successfully",
+        token,
+        user: {
+            _id: existingUser._id,
+            userName: existingUser.userName,
+            userEmail: existingUser.userEmail,
+            userPhoneNumber: existingUser.userPhoneNumber,
+            userRole: existingUser.userRole
+        }
+    });
+};
 
 
 //forgot pass
@@ -76,75 +104,80 @@ const forgotPassword = async (req, res) => {
     if (!userEmail) {
         return res.status(400).json({
             message: "Email is required"
-        })
+        });
     }
-    const existingUser = await User.findOne({
-        userEmail
-    })
+
+    const normalizedEmail = normalizeEmail(userEmail);
+    const existingUser = await User.findOne({ userEmail: normalizedEmail });
     if (!existingUser) {
         return res.status(404).json({
             message: "User not found,Register first"
-        })
+        });
     }
-    const otp = Math.floor(100000 + Math.random() * 900000)
 
-
-    existingUser.otp = otp
-    await existingUser.save()
-
+    const otp = Math.floor(100000 + Math.random() * 900000);
+    existingUser.otp = otp;
+    existingUser.isOtpVerified = false;
+    existingUser.isOtpVerifed = false;
+    await existingUser.save();
 
     const option = {
-        userEmail,
+        userEmail: normalizedEmail,
         subject: "Password Reset OTP",
         text: `Your OTP for password reset is ${otp}`
-    }
+    };
     await sendEmail(option);
 
     return res.status(200).json({
         message: "OTP sent to email"
-    })
-}
-
+    });
+};
 
 // verify otp
 const verifyOtp = async (req, res) => {
-    const { userEmail, otp, newPassword } = req.body;
-    if(!userEmail || !otp || !newPassword) {
+    const { userEmail, otp } = req.body;
+    if (!userEmail || !otp) {
         return res.status(400).json({
-            message: "All fields are required"
-        })
+            message: "Email and OTP are required"
+        });
     }
-    const existingUser = await User.findOne({
-        userEmail
-    })
 
+    const normalizedEmail = normalizeEmail(userEmail);
+    const existingUser = await User.findOne({ userEmail: normalizedEmail });
     if (!existingUser) {
         return res.status(404).json({
             message: "User not found"
-        })
+        });
     }
-        const isOtpValid = existingUser.otp === parseInt(otp)
+
+    const isOtpValid = existingUser.otp === Number(otp);
     if (!isOtpValid) {
         return res.status(400).json({
             message: "Invalid OTP"
-        })
+        });
     }
 
-    const otpExpiryTime = 10 * 60 * 1000; // 10 minutes
-    const currentTime = Date.now();
-    const otpGeneratedTime = existingUser.updatedAt.getTime();
-    const diff = currentTime - otpGeneratedTime;
+    const otpExpiryTime = 10 * 60 * 1000;
+    const otpGeneratedTime = existingUser.updatedAt ? existingUser.updatedAt.getTime() : Date.now();
+    const diff = Date.now() - otpGeneratedTime;
     if (diff > otpExpiryTime) {
+        existingUser.otp = null;
+        existingUser.isOtpVerified = false;
+        existingUser.isOtpVerifed = false;
+        await existingUser.save();
         return res.status(400).json({
             message: "OTP expired, please generate a new one"
-        })
+        });
     }
+
+    existingUser.isOtpVerified = true;
+    existingUser.isOtpVerifed = true;
+    await existingUser.save();
 
     return res.status(200).json({
         message: "Otp verified succesfully, you can now reset your password"
-    })
-}
-
+    });
+};
 
 // reset password
 const resetPassword = async (req, res) => {
@@ -152,53 +185,53 @@ const resetPassword = async (req, res) => {
     if (!userEmail || !newPassword || !confirmPassword) {
         return res.status(400).json({
             message: "Email, new password and confirm password are required"
-        })
+        });
     }
+
     if (newPassword !== confirmPassword) {
         return res.status(400).json({
             message: "New password and confirm password do not match"
-        })
+        });
     }
-    const existingUser = await User.findOne({
-        userEmail
-    })
+
+    const normalizedEmail = normalizeEmail(userEmail);
+    const existingUser = await User.findOne({ userEmail: normalizedEmail });
     if (!existingUser) {
         return res.status(404).json({
             message: "User not found"
-        })
+        });
     }
-    if (!existingUser.isOtpVerifed){
+
+    const otpVerified = existingUser.isOtpVerified || existingUser.isOtpVerifed;
+    if (!otpVerified) {
         return res.status(400).json({
             message: "OTP not verified"
-        })
+        });
     }
 
-
-    const optVerificationTime = 10 * 60 * 1000; // 10 minutes
-    const currentTime = Date.now();
-    const otpGeneratedTime = existingUser.updatedAt.getTime();
-    const diff = currentTime - otpGeneratedTime;
-    const passwordResetExpiryTime = 10 * 60 * 1000; // 10 minutes in milliseconds
-    if (diff > optVerificationTime) {
-       existingUser.isOtpVerifed = false;
-         await existingUser.save();
-
-
-
-         return res.statuss (400).json({
+    const otpExpiryTime = 10 * 60 * 1000;
+    const otpGeneratedTime = existingUser.updatedAt ? existingUser.updatedAt.getTime() : Date.now();
+    const diff = Date.now() - otpGeneratedTime;
+    if (diff > otpExpiryTime) {
+        existingUser.isOtpVerified = false;
+        existingUser.isOtpVerifed = false;
+        existingUser.otp = null;
+        await existingUser.save();
+        return res.status(400).json({
             message: "OTP verification expired, please verify OTP again"
-        })
+        });
     }
-    existingUser.userPassword = await bcrypt.hash(newPassword, 10)
+
+    existingUser.userPassword = await bcrypt.hash(newPassword, 10);
+    existingUser.isOtpVerified = false;
     existingUser.isOtpVerifed = false;
-    await existingUser.save()
-
-
+    existingUser.otp = null;
+    await existingUser.save();
 
     return res.status(200).json({
         message: "Password reset successfully"
-    })
-}
+    });
+};
 
 module.exports = {
     registerUser,

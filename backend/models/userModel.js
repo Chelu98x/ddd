@@ -19,16 +19,25 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    cart: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Product',
+        default: []
+    }],
     userRole: {
         type: String,
         enum: [ 'customer', 'seller'],
         default: 'customer'
     },
-        otp: {
+    otp: {
         type: Number,
         default: null
     },
     isOtpVerified: {
+        type: Boolean,
+        default: false
+    },
+    isOtpVerifed: {
         type: Boolean,
         default: false
     }

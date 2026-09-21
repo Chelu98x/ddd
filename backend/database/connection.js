@@ -6,44 +6,33 @@ const bcrypt = require ("bcrypt")
 
 const connectDB = async () => {
     try {
-        const mongoUri = process.env.MONGODB_URI;
-        if (!mongoUri) {
-            throw new Error('MONGODB_URI is not defined. Set it in your .env file.')
-        }
-
+        const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ddd';
         await mongoose.connect(mongoUri)
         console.log("DB Connected")
     } catch (error) {
         console.error("DB Connection Failed", error)
     }
 
+    const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@ddd.com';
 
-
-// admin seeding
-const adminPassword = process.env.ADMIN_PASSWORD
-const adminEmail = process.env.ADMIN_EMAIL
-
-
-const existingAdmin = await User.findOne({
-    userEmail: adminEmail,
-    userRole: "seller"
-})
-
-
-
-if (!existingAdmin) {
-    await User.create ({
+    const existingAdmin = await User.findOne({
         userEmail: adminEmail,
-        userPassword: await bcrypt.hash(adminPassword,10),
-        userRole: "seller",
-        userName: " Admin",
-        userPhoneNumber: "000000000000000"
-        
+        userRole: "seller"
     })
-    console.log("Admin user created")
-}else{
-    console.log("Admin user already exists")
-}
+
+    if (!existingAdmin) {
+        await User.create ({
+            userEmail: adminEmail,
+            userPassword: await bcrypt.hash(adminPassword,10),
+            userRole: "seller",
+            userName: " Admin",
+            userPhoneNumber: "000000000000000"
+        })
+        console.log("Admin user created")
+    }else{
+        console.log("Admin user already exists")
+    }
 }
 
 module.exports = connectDB
