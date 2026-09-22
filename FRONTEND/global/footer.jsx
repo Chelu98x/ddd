@@ -43,14 +43,14 @@ const Footer = () => {
           <div className="sm:col-span-2 lg:col-span-2">
             <a href="/" className="flex items-center gap-2">
               <span className="text-2xl">🍢</span>
-              <span className="text-2xl font-bold text-yellow-900 dark:text-white">Digital<span className="text-yellow-700"> Momo</span></span>
+              <span className="text-2xl font-bold text-yellow-900 dark:text-white">Saman Kinam Hai</span>
             </a>
             <p className="mt-4 max-w-sm text-gray-600 dark:text-gray-300">
-              Bringing your favorite dishes from local restaurants straight to your door, fresh and fast.
+              Buy your gadgets from Saman Kinam Hai.
             </p>
 
             <div className="mt-6">
-              <p className="text-sm font-semibold text-gray-800 dark:text-white">Follow us <span className="font-normal text-yellow-700">@digitalmomo</span></p>
+              <p className="text-sm font-semibold text-gray-800 dark:text-white">Follow us <span className="font-normal text-yellow-700">@samankinamhai</span></p>
               <div className="flex gap-3 mt-3">
                 {socialLinks.map((social) => (
                   <a
@@ -97,8 +97,8 @@ const Footer = () => {
         <hr className="my-8 border-yellow-200 dark:border-gray-700" />
 
         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-          <p className="text-sm text-gray-600 dark:text-gray-300">© {new Date().getFullYear()} Digital Momo. All rights reserved.</p>
-          <p className="text-sm text-gray-600 dark:text-gray-300">Made with 🧡 by <span className="font-semibold text-yellow-800 dark:text-yellow-400">@digitalmomo</span></p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">© {new Date().getFullYear()} Saman Kinam Hai. All rights reserved.</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">Made with 🧡 by <span className="font-semibold text-yellow-800 dark:text-yellow-400">@Chelson Chaudhary</span></p>
         </div>
       </div>
     </footer>

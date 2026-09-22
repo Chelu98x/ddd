@@ -26,13 +26,15 @@ function Login() {
     }
 
     try {
-      await dispatch(loginUser({
+      const response = await dispatch(loginUser({
         userEmail: form.userEmail,
         userPassword: form.userPassword,
         email: form.userEmail,
         password: form.userPassword
       }));
-      navigate("/");
+
+      const userRole = response?.user?.userRole || response?.userRole;
+      navigate(userRole === "seller" ? "/admin/dashboard" : "/");
     } catch (err) {
       setError(err?.response?.data?.message || "Login failed. Please try again.");
     }

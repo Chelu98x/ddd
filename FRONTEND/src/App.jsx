@@ -20,18 +20,38 @@ import EditProduct from "./pages/admin/dashboard/EditProduct";
 import AllReviews from "./pages/admin/AllReview";
 import store from "../global/STORE/store";
 
+function getUserRoleFromToken() {
+  const token = localStorage.getItem("token");
+
+  if (!token) return null;
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1] || ""));
+    return payload?.userRole || null;
+  } catch {
+    return null;
+  }
+}
+
 function PublicOnly({ children }) {
   const token = useSelector((state) => state.auth.token) || localStorage.getItem("token");
+  const user = useSelector((state) => state.auth.data);
+  const userRole = user?.userRole || getUserRoleFromToken();
 
-  return token ? <Navigate to="/" replace /> : children;
+  if (!token) return children;
+  if (userRole === "seller") return <Navigate to="/admin/dashboard" replace />;
+
+  return <Navigate to="/" replace />;
 }
 
 function AdminOnly({ children }) {
   const token = useSelector((state) => state.auth.token) || localStorage.getItem("token");
   const user = useSelector((state) => state.auth.data);
+  const userRole = user?.userRole || getUserRoleFromToken();
 
   if (!token) return <Navigate to="/login" replace />;
-  if (user && user.userRole && user.userRole !== "seller") return <Navigate to="/" replace />;
+  if (!userRole) return <Navigate to="/login" replace />;
+  if (userRole !== "seller") return <Navigate to="/" replace />;
 
   return children;
 }

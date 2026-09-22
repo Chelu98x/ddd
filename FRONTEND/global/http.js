@@ -1,22 +1,19 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api/";
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "http://localhost:3000/api").replace(/\/+$/, "");
 
-const API = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  },
-});
+const createApi = () =>
+  axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    timeout: 15000,
+  });
 
-const APIAuth = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  },
-});
+const API = createApi();
+const APIAuth = createApi();
 
 APIAuth.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
@@ -30,5 +27,30 @@ APIAuth.interceptors.request.use((config) => {
   return config;
 });
 
-export { API, APIAuth };
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response) {
+      console.error("API error:", error.response.status, error.response.data);
+    } else if (error.request) {
+      console.error("No response from backend:", error.request);
+    } else {
+      console.error("Request setup error:", error.message);
+    }
 
+    return Promise.reject(error);
+  }
+);
+
+APIAuth.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export { API, APIAuth };

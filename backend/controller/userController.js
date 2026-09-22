@@ -5,12 +5,23 @@ const jwt = require ('jsonwebtoken')
 
 const normalizeEmail = (value = "") => String(value).trim().toLowerCase();
 
+const normalizeUserRole = (value) => {
+    const normalized = String(value ?? "customer").trim().toLowerCase();
+
+    if (normalized === "admin" || normalized === "seller") {
+        return "seller";
+    }
+
+    return "customer";
+};
+
 const registerUser = async (req, res) => {
     const payload = req.body || {};
     const userEmail = normalizeEmail(payload.userEmail || payload.email);
     const userPhoneNumber = String(payload.userPhoneNumber || payload.phoneNumber || payload.phone || "").trim();
     const userName = String(payload.userName || payload.name || payload.fullName || "").trim();
     const userPassword = payload.userPassword || payload.password;
+    const userRole = normalizeUserRole(payload.userRole || payload.role);
 
     if (!userEmail || !userPhoneNumber || !userName || !userPassword) {
         return res.status(400).json({ message: "All fields are required" });
@@ -31,7 +42,8 @@ const registerUser = async (req, res) => {
             userEmail,
             userPhoneNumber,
             userName,
-            userPassword: await bcrypt.hash(userPassword, 10)
+            userPassword: await bcrypt.hash(userPassword, 10),
+            userRole
         });
 
         sendEmail({
@@ -80,7 +92,10 @@ const loginUser = async (req, res) => {
         return res.status(400).json({ message: "Invalid password" });
     }
 
-    const token = jwt.sign({ userId: existingUser._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({
+        userId: existingUser._id,
+        userRole: existingUser.userRole
+    }, process.env.JWT_SECRET, {
         expiresIn: "30d"
     });
 
@@ -238,5 +253,6 @@ module.exports = {
     loginUser,
     forgotPassword,
     verifyOtp,
-    resetPassword
+    resetPassword,
+    normalizeUserRole
 }

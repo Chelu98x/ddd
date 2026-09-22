@@ -34,9 +34,9 @@ export default function Navbar() {
       <div className="container px-4 mx-auto md:px-8 lg:px-10">
         <div className="flex items-center justify-between py-4">
           <div className="flex items-center gap-10">
-            <Link to="/" aria-label="Digital Momo home" className="flex items-center gap-2 shrink-0" onClick={closeMenu}>
+            <Link to="/" aria-label="Saman Kinam Hai home" className="flex items-center gap-2 shrink-0" onClick={closeMenu}>
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-yellow-100 text-xl">🍢</span>
-              <span className="text-2xl font-bold text-yellow-900">Digital<span className="text-yellow-700"> Momo</span></span>
+              <span className="text-2xl font-bold text-yellow-900">Saman<span className="text-yellow-700"> Kinam Hai</span></span>
             </Link>
 
             <ul className="hidden items-center gap-8 text-base font-medium text-slate-700 lg:flex">
