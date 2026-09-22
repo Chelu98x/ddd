@@ -1,0 +1,10 @@
+{
+  "name": "ddd",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix FRONTEND run dev",
+    "build": "npm --prefix FRONTEND run build",
+    "preview": "npm --prefix FRONTEND run preview",
+    "lint": "npm --prefix FRONTEND run lint"
+  }
+}
