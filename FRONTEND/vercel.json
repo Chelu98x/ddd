@@ -1,6 +1,8 @@
 {
-  "framework": "vite",
-  "installCommand": "npm install --prefix FRONTEND",
-  "buildCommand": "npm --prefix FRONTEND run build",
-  "outputDirectory": "FRONTEND/dist"
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
