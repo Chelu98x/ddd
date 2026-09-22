@@ -5,7 +5,6 @@
     "dev": "npm --prefix FRONTEND run dev",
     "build": "npm --prefix FRONTEND run build",
     "preview": "npm --prefix FRONTEND run preview",
-    "lint": "npm --prefix FRONTEND run lint",
-    "install:frontend": "npm --prefix FRONTEND install"
+    "lint": "npm --prefix FRONTEND run lint"
   }
 }
