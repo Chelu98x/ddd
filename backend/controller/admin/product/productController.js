@@ -6,7 +6,7 @@ const Product = require('../../../models/admin/product/productModel')
 const createProduct = async (req, res) => {
     const { productName, productDescription, productStockQty, productStatus, productPrice } = req.body;
     if (!productName || !productDescription || !productStockQty || !productStatus || !productPrice) {
-        return res.status(400).json({ message: "All fields are required" });
+        // return res.status(400).json({ message: "All fields are required" });
     }
 
 
