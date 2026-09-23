@@ -49,7 +49,7 @@ function AdminOnly({ children }) {
   const user = useSelector((state) => state.auth.data);
   const userRole = user?.userRole || getUserRoleFromToken();
 
-  if (!token) return <Navigate to="/login" replace />;
+  if (!token) return <Navigate to="/loginn" replace />;
   if (!userRole) return <Navigate to="/login" replace />;
   if (userRole !== "seller") return <Navigate to="/" replace />;
 
