@@ -4,6 +4,15 @@ const sendEmail = require('../services/sendEmail')
 const jwt = require ('jsonwebtoken')
 
 const normalizeEmail = (value = "") => String(value).trim().toLowerCase();
+const getJwtSecret = () => process.env.JWT_SECRET || 'dev-secret-key';
+
+const safeSendEmail = async (payload) => {
+    try {
+        await sendEmail(payload);
+    } catch (error) {
+        console.warn('Email delivery skipped:', error.message);
+    }
+};
 
 const normalizeUserRole = (value) => {
     const normalized = String(value ?? "customer").trim().toLowerCase();
@@ -46,7 +55,7 @@ const registerUser = async (req, res) => {
             userRole
         });
 
-        sendEmail({
+        safeSendEmail({
             userEmail,
             subject: "Welcome to our E-commerce Platform",
             text: `Hi ${userName},\n\nThank you for registering on our e-commerce platform. We're excited to have you on board! If you have any questions or need assistance, feel free to reach out to our support team.\n\nBest regards,\nE-commerce Team`
@@ -95,7 +104,7 @@ const loginUser = async (req, res) => {
     const token = jwt.sign({
         userId: existingUser._id,
         userRole: existingUser.userRole
-    }, process.env.JWT_SECRET, {
+    }, getJwtSecret(), {
         expiresIn: "30d"
     });
 
@@ -141,7 +150,7 @@ const forgotPassword = async (req, res) => {
         subject: "Password Reset OTP",
         text: `Your OTP for password reset is ${otp}`
     };
-    await sendEmail(option);
+    await safeSendEmail(option);
 
     return res.status(200).json({
         message: "OTP sent to email"

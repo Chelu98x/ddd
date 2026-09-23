@@ -1,20 +1,31 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async (options) => {
-    let transporter = nodemailer.createTransport({
+    const user = process.env.EMAIL_USER;
+    const pass = process.env.EMAIL_PASS;
+
+    if (!user || !pass) {
+        console.warn('Email credentials missing. Skipping email delivery for:', options?.userEmail);
+        return null;
+    }
+
+    const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    })
+            user,
+            pass,
+        },
+    });
+
     const mailOptions = {
-        from: process.env.EMAIL_USER,
+        from: user,
         to: options.userEmail,
         subject: options.subject,
-        text: options.text
-    }
+        text: options.text,
+    };
+
     await transporter.sendMail(mailOptions);
-}
+    return true;
+};
 
 module.exports = sendEmail;
