@@ -2,7 +2,7 @@
   "name": "ddd",
   "private": true,
   "workspaces": [
-    "FRONTEND",
+    "frontend",
     "backend"
   ],
   "scripts": {
